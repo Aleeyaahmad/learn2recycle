@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'start_screen.dart'; // Replace with your actual StartScreen import
+import 'start_screen.dart'; 
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -89,7 +89,7 @@ class _ProfilePageState extends State<ProfilePage> {
               }
             },
             child: Text("Save", 
-            style: TextStyle(fontFamily: 'Comfortaa', fontSize: 16, fontWeight: FontWeight.bold),),
+              style: TextStyle(fontFamily: 'Comfortaa', fontSize: 16, fontWeight: FontWeight.bold),),
           ),
         ],
       ),
@@ -102,19 +102,14 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: Color(0xFFF0FFF0),
       appBar: AppBar(
         title: Text("Profile",
-          style: TextStyle(
-                fontSize: 20,
-                fontFamily: 'Comfortaa',
-                fontWeight: FontWeight.bold,
-                color: Colors.white,),
-                ),
+          style: TextStyle(fontSize: 20, fontFamily: 'Comfortaa', fontWeight: FontWeight.bold,color: Colors.white)),
         centerTitle: true,
         backgroundColor: Color(0xFFa4c291),
         elevation: 0,
         actions: [
           Builder(
             builder: (context) => IconButton(
-              icon: Icon(Icons.settings, color: Colors.white),
+              icon: Image.asset('assets/icons/settings.png', height: 28, width: 28, color: Colors.white),
               onPressed: () => Scaffold.of(context).openEndDrawer(),
             ),
           ),
@@ -125,29 +120,26 @@ class _ProfilePageState extends State<ProfilePage> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(color: Color(0xFF447055)),
+              decoration: BoxDecoration(color: Color(0xFFa4c291)),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.settings, size: 48, color: Color(0xFF447055)),
                     SizedBox(height: 10),
-                    Text(
-                      "Settings",
-                      style: TextStyle(fontFamily: 'Comfortaa', fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
+                    Text("Settings",
+                      style: TextStyle(fontFamily: 'Comfortaa', fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
                   ],
                 ),
               ),
             ),
             ListTile(
-              leading: Image.asset('assets/icons/about.png'),
-              title: Text("About App"),
+              leading: Image.asset('assets/icons/info.png', height: 25, width: 25),
+              title: Text("About App", style: TextStyle(fontFamily: 'Comfortaa', fontSize: 15, color: Colors.black)),
               onTap: _showAboutDialog,
             ),
             ListTile(
-              leading: Image.asset('assets/icons/logout.png'),
-              title: Text("Logout"),
+              leading: Image.asset('assets/icons/logout.png', height: 25, width: 25),
+              title: Text("Logout",style: TextStyle(fontFamily: 'Comfortaa', fontSize: 15, color: Colors.black)),
               onTap: _logout,
             ),
           ],
@@ -158,12 +150,7 @@ class _ProfilePageState extends State<ProfilePage> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.green[300],
-                child: Icon(Icons.person, size: 60, color: Colors.white),
-              ),
+            children: [     
               SizedBox(height: 20),
               if (_username != null)
                 Column(
@@ -177,11 +164,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     SizedBox(height: 10),
-                    Text(
-                      "Manage your profile and settings here.",
-                      style: TextStyle(fontSize: 16, color: Colors.black54),
-                      textAlign: TextAlign.center,
-                    ),
                   ],
                 )
               else

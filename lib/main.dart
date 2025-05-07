@@ -28,7 +28,12 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     MapPage(),
-    HomePage(),
+    Homepage(
+      imageFiles: [], // Provide an appropriate list of image files
+      onImagesUpdated: (updatedImages) {
+        // Handle the updated images here
+      },
+    ),
     ProfilePage(),
   ];
 

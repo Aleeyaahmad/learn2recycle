@@ -49,9 +49,8 @@ class _StartScreenState extends State<StartScreen> {
                   page['title'],
                   style: TextStyle(
                     fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Pacifico', // Custom title font
-                    color: Colors.black87,
+                    fontFamily: 'Pacifico', 
+                    color: Colors.black,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -76,7 +75,7 @@ class _StartScreenState extends State<StartScreen> {
                   height: 8,
                   width: _currentIndex == index ? 16 : 8,
                   decoration: BoxDecoration(
-                    color: _currentIndex == index ? Colors.black87 : Colors.grey,
+                    color: _currentIndex == index ? Colors.black : Colors.grey,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );
