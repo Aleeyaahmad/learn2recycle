@@ -12,10 +12,10 @@ class _StartScreenState extends State<StartScreen> {
 
   final List<Map<String, dynamic>> pages = [
     {
-      'image': 'assets/icons/recycle.png',
+      'image': 'assets/icons/logo.png',
       'title': 'Welcome to Learn2Recycle!',
       'description': 'You\'re now part of our eco-friendly mission. Let\'s get started!',
-      'bgColor': Color(0xFFFFFDE7),
+      'bgColor': Color(0xFF9FD4A3),
     },
     {
       'image': 'assets/icons/onboarding1.png',
@@ -101,7 +101,7 @@ class _StartScreenState extends State<StartScreen> {
                     ),
                     child: Text(
                       'Skip',
-                      style: TextStyle(color: Colors.black),
+                      style: TextStyle(color: Colors.black, fontFamily: 'Comfortaa'),
                     ),
                   ),
                 SizedBox(width: 16),
@@ -127,7 +127,8 @@ class _StartScreenState extends State<StartScreen> {
                     ),
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   ),
-                  child: Text(_currentIndex == pages.length - 1 ? 'Let’s Start' : 'Next'),
+                  child: Text(_currentIndex == pages.length - 1 ? 'Let’s Start' : 'Next',
+                      style: TextStyle(fontFamily: 'Comfortaa')),
                 ),
               ],
             ),

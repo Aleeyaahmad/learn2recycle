@@ -182,7 +182,11 @@ class _MapPageState extends State<MapPage> {
             child: Stack(
               children: [
                 _userLocation == null
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFa4c291),
+                        ),
+                      )
                     : GoogleMap(
                         onMapCreated: (controller) {
                           _controller = controller;

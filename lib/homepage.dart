@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_vision/flutter_vision.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
-import 'package:learn2recycle/recycle_info.dart';
+import 'package:learn2recycle/classify_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Homepage extends StatefulWidget {
   final List<File> imageFiles;
@@ -34,10 +36,9 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    imageFiles = List.from(widget.imageFiles);
     _loadModel();
+    _loadStoredData();
 
-    // Fade animation setup
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -55,6 +56,25 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
       numThreads: 1,
       useGpu: false,
     );
+  }
+
+  Future<void> _loadStoredData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final paths = prefs.getStringList('stored_images') ?? [];
+    final outputJson = prefs.getString('detection_output');
+    final decodedOutput = outputJson != null ? List<Map<String, dynamic>>.from(jsonDecode(outputJson)) : [];
+
+    setState(() {
+      imageFiles = paths.map((p) => File(p)).where((f) => f.existsSync()).toList();
+      _output = decodedOutput.cast<Map<String, dynamic>>();
+    });
+  }
+
+  Future<void> _saveStoredData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final paths = imageFiles.map((f) => f.path).toList();
+    await prefs.setStringList('stored_images', paths);
+    await prefs.setString('detection_output', jsonEncode(_output));
   }
 
   Future<void> _classifyImage(File image) async {
@@ -78,54 +98,91 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
       return {
         'index': imageFiles.indexOf(image),
         'label': pred['tag'],
-        'confidence': (box[4] * 100).toStringAsFixed(2), // Confidence percentage
+        'confidence': (box[4] * 100).toStringAsFixed(2),
       };
     }).toList();
 
     setState(() {
       _output.addAll(results);
     });
+
+    await _saveStoredData();
   }
 
   Future<void> _takePhoto() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera);
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       final file = File(pickedFile.path);
       setState(() {
-        imageFiles.add(file);  // Add the image to the list
+        imageFiles.add(file);
       });
       widget.onImagesUpdated(imageFiles);
 
-      // Classify the new image
+      // Show green loader
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFFa4c291),
+            ),
+          );
+        },
+      );
+
       await _classifyImage(file);
+      Navigator.of(context).pop(); // Dismiss loader
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UploadedImagesPage(
+            imageFiles: imageFiles,
+            output: _output,
+          ),
+        ),
+      );
     }
   }
 
   Future<void> _uploadPhoto() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       final file = File(pickedFile.path);
       setState(() {
-        imageFiles.add(file);  // Add the image to the list
+        imageFiles.add(file);
       });
       widget.onImagesUpdated(imageFiles);
 
-      // Classify the new image
-      await _classifyImage(file);
-    }
-  }
+      // Show green loader
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFFa4c291),
+            ),
+          );
+        },
+      );
 
-  void _removeImage(int index) {
-    setState(() {
-      imageFiles.removeAt(index);
-      _output.removeWhere((e) => e['index'] == index);
-      for (var e in _output) {
-        if (e['index'] > index) e['index'] -= 1;
-      }
-    });
-    widget.onImagesUpdated(imageFiles);
+      await _classifyImage(file);
+      Navigator.of(context).pop(); // Dismiss loader
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UploadedImagesPage(
+            imageFiles: imageFiles,
+            output: _output,
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildButton(String label, String iconPath, Function() onPressed) {
@@ -135,14 +192,21 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
         iconPath,
         width: 24,
         height: 24,
+        color: Colors.white,
       ),
       label: Text(
         label,
-        style: const TextStyle(fontSize: 18),
+        style: const TextStyle(
+          fontSize: 16,
+          color: Colors.white,
+          fontFamily: 'Comfortaa',
+          fontWeight: FontWeight.bold,
+        ),
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF245651),
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+        fixedSize: const Size(250, 60),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -184,50 +248,18 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                 _buildButton("Take Photo", "assets/icons/camera.png", _takePhoto),
                 const SizedBox(height: 15),
                 _buildButton("Upload Photo", "assets/icons/gallery.png", _uploadPhoto),
-
-                // Show the classified images and their results
-                const SizedBox(height: 20),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: imageFiles.length,
-                    itemBuilder: (context, index) {
-                      final image = imageFiles[index];
-                      final detections = _output.where((e) => e['index'] == index).toList();
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        elevation: 4,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Image.file(image, height: 150, fit: BoxFit.cover, width: double.infinity),
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: detections.isEmpty
-                                  ? const Text('No recyclable items detected')
-                                  : Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: detections.map((det) {
-                                        return Text(
-                                          '${det['label']} - ${det['confidence']}%',  // Display label and confidence
-                                        );
-                                      }).toList(),
-                                    ),
-                            ),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => _removeImage(index),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                const SizedBox(height: 15),
+                _buildButton("Uploaded Images", "assets/icons/list.png", () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UploadedImagesPage(
+                        imageFiles: imageFiles,
+                        output: _output,
+                      ),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
