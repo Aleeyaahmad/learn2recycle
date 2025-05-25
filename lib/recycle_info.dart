@@ -1,54 +1,145 @@
 import 'package:flutter/material.dart';
 
-class RecycleInfo extends StatelessWidget {
-  final List<String> detectedItems;
+class RecycleInfoPage extends StatelessWidget {
+  const RecycleInfoPage({Key? key}) : super(key: key);
 
-  const RecycleInfo({Key? key, required this.detectedItems}) : super(key: key);
-
-  // Example recycling tips per item label
-  static const Map<String, String> recycleTips = {
-    'plastic bottle': 'Rinse and remove the cap before recycling.',
-    'aluminum can': 'Crush to save space. Rinse before disposal.',
-    'glass jar': 'Remove lid and rinse. Avoid broken glass.',
-    'paper': 'Keep clean and dry. Don’t recycle greasy paper.',
-    'cardboard': 'Flatten and remove tape before recycling.',
-    'metal': 'Rinse off food residue. Small pieces may not be accepted.',
-    'plastic bag': 'Do not put in curbside bin; take to store drop-off.',
-    // Add more custom tips as needed
-  };
+  Widget _buildCategory(String emoji, String title, String doText, String dontText) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24), // More rounded
+      ),
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      elevation: 4,
+      color: Colors.lightGreen[50],
+      child: Theme(
+        data: ThemeData().copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          collapsedBackgroundColor: const Color(0xFFa4c291),
+          backgroundColor: Colors.lightGreen[50],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24), // More rounded
+          ),
+          collapsedShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24), // More rounded
+          ),
+          leading: Text(
+            emoji,
+            style: const TextStyle(fontSize: 26),
+          ),
+          iconColor: Colors.black,
+          collapsedIconColor: Colors.black,
+          trailing: Image.asset('assets/icons/expand.png', height: 15, width: 15, color: Colors.black,
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(fontFamily: 'Comfortaa', fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black,
+            ),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Image.asset('assets/icons/do.png', height: 24, width: 24),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Do:',
+                        style: TextStyle(fontFamily: 'Comfortaa', fontSize: 18, fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    doText,
+                    style: const TextStyle(fontFamily: 'Comfortaa', fontSize: 14),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Image.asset('assets/icons/dont.png', height: 24, width: 24),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Don’t:',
+                        style: TextStyle(fontFamily: 'Comfortaa', fontSize: 18, fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    dontText,
+                    style: const TextStyle(fontFamily: 'Comfortaa', fontSize: 14),
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF0FFF0),
       appBar: AppBar(
-        title: const Text('Recycling Tips'),
-        backgroundColor: const Color(0xFF245651),
+        leading: IconButton(
+          icon: Image.asset('assets/icons/back.png', height: 20, width: 20, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: const Text(
+          "Recycling Guidelines",
+          style: TextStyle(fontSize: 20, fontFamily: 'Comfortaa', fontWeight: FontWeight.bold, color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFFa4c291),
+        elevation: 0,
       ),
-      backgroundColor: const Color(0xFFE6F6CB),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: detectedItems.isEmpty
-            ? const Center(child: Text("No items to show."))
-            : ListView.builder(
-                itemCount: detectedItems.length,
-                itemBuilder: (context, index) {
-                  final item = detectedItems[index];
-                  final tip = recycleTips[item.toLowerCase()] ??
-                      'No specific tip available. Please check with your local recycling program.';
-
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      leading: const Icon(Icons.recycling, color: Colors.green),
-                      title: Text(
-                        item[0].toUpperCase() + item.substring(1),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(tip),
-                    ),
-                  );
-                },
-              ),
+        padding: const EdgeInsets.all(12),
+        child: ListView(
+          children: [
+            _buildCategory(
+              '📄',
+              'Paper',
+              '• Recycle clean paper, newspapers, magazines and also colored paper',
+              '• Don’t recycle dirty paper, tissues, or paper with food or glue',
+            ),
+            _buildCategory(
+              '📦',
+              'Cardboard',
+              '• Recycle clean cardboard boxes\n• Always flatten the boxes to save space',
+              '• Don’t recycle pizza boxes or wet cardboard',
+            ),
+            _buildCategory(
+              '🧴',
+              'Plastic',
+              '• Recycle clean bottles, bottle caps, and some plastic containers\n• Look for symbols like PET, HDPE, or PP',
+              '• Don’t recycle plastic bags, plastic wrap, or dirty containers',
+            ),
+            _buildCategory(
+              '🥫',
+              'Metal',
+             '• Recycle clean cans like soda or food cans\n• Metal containers are okay if they’re not dirty',
+             '• Don’t recycle spray cans or metal with paint or layers',
+            ),
+            _buildCategory(
+              '🍶',
+              'Glass',
+              '• Recycle clean glass bottles and jars\n• Make sure they are not broken',
+              '• Don’t recycle mirrors, Pyrex, or ceramic items',
+            ),
+          ],
+        ),
       ),
     );
   }

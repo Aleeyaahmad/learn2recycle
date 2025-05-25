@@ -20,7 +20,7 @@ class _StartScreenState extends State<StartScreen> {
     {
       'image': 'assets/icons/onboarding1.png',
       'title': 'Waste Detector',
-      'description': 'Identify recyclable waste easily and reduce your carbon footprint.',
+      'description': 'Identify recyclable waste easily and dispose it based on category.',
       'bgColor': Color(0xFFFFEBEE),
     },
     {

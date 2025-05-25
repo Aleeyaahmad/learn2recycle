@@ -5,6 +5,7 @@ import 'package:flutter_vision/flutter_vision.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:learn2recycle/classify_page.dart';
+import 'package:learn2recycle/detection_result.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Homepage extends StatefulWidget {
@@ -96,7 +97,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
     final results = output.map((pred) {
       var box = pred['box'];
       return {
-        'index': imageFiles.indexOf(image),
+        'path': image.path,
         'label': pred['tag'],
         'confidence': (box[4] * 100).toStringAsFixed(2),
       };
@@ -119,28 +120,37 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
       });
       widget.onImagesUpdated(imageFiles);
 
-      // Show green loader
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
           return const Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFFa4c291),
-            ),
+            child: CircularProgressIndicator(color: Color(0xFFa4c291)),
           );
         },
       );
 
       await _classifyImage(file);
-      Navigator.of(context).pop(); // Dismiss loader
+      Navigator.of(context).pop();
 
+      // Navigate to DetectionResultPage first
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => UploadedImagesPage(
-            imageFiles: imageFiles,
-            output: _output,
+          builder: (context) => DetectionResultPage(
+            image: file,
+            detections: _output.where((e) => e['path'] == file.path).toList(),
+            onBack: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UploadedImagesPage(
+                    imageFiles: imageFiles,
+                    output: _output,
+                  ),
+                ),
+              );
+            },
           ),
         ),
       );
@@ -157,28 +167,37 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
       });
       widget.onImagesUpdated(imageFiles);
 
-      // Show green loader
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
           return const Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFFa4c291),
-            ),
+            child: CircularProgressIndicator(color: Color(0xFFa4c291)),
           );
         },
       );
 
       await _classifyImage(file);
-      Navigator.of(context).pop(); // Dismiss loader
+      Navigator.of(context).pop();
 
+      // Navigate to DetectionResultPage first
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => UploadedImagesPage(
-            imageFiles: imageFiles,
-            output: _output,
+          builder: (context) => DetectionResultPage(
+            image: file,
+            detections: _output.where((e) => e['path'] == file.path).toList(),
+            onBack: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UploadedImagesPage(
+                    imageFiles: imageFiles,
+                    output: _output,
+                  ),
+                ),
+              );
+            },
           ),
         ),
       );
@@ -188,12 +207,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
   Widget _buildButton(String label, String iconPath, Function() onPressed) {
     return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: Image.asset(
-        iconPath,
-        width: 24,
-        height: 24,
-        color: Colors.white,
-      ),
+      icon: Image.asset(iconPath, width: 24, height: 24, color: Colors.white),
       label: Text(
         label,
         style: const TextStyle(
@@ -207,9 +221,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
         backgroundColor: const Color(0xFF245651),
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
         fixedSize: const Size(250, 60),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -226,9 +238,10 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "Snap & Recycle! 📸♻️",
+                  "Snap & \nRecycle! 📸♻️",
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 34,
+                    fontSize: 32,
                     fontFamily: 'Pacifico',
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -238,7 +251,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                 Text(
                   "Take a picture & learn about recycling!",
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 15,
                     fontFamily: 'Comfortaa',
                     color: Colors.white,
                   ),
@@ -260,6 +273,52 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                     ),
                   );
                 }),
+                const SizedBox(height: 30),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Go Green Today!",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontFamily: 'comfortaa',
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 150,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.asset(
+                                'assets/icons/ads1.png',
+                                width: 250,
+                                height: 150,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.asset(
+                                'assets/icons/ads2.png',
+                                width: 250,
+                                height: 150,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

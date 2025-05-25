@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'start_screen.dart';
+import 'recycle_info.dart'; 
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -169,7 +170,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ExpansionTile(
                         iconColor: Colors.black,
                         collapsedIconColor: Colors.black,
-                        trailing: Image.asset('assets/icons/expand.png', height: 20, width: 20, color: Colors.black),
+                        trailing: Image.asset('assets/icons/expand.png', height: 15, width: 15, color: Colors.black),
                         title: Text("How does Learn2Recycle work?", style: TextStyle(fontFamily: 'Comfortaa')),
                         children: [
                           Padding(
@@ -184,7 +185,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ExpansionTile(
                         iconColor: Colors.black,
                         collapsedIconColor: Colors.black,
-                        trailing: Image.asset('assets/icons/expand.png', height: 20, width: 20, color: Colors.black),
+                        trailing: Image.asset('assets/icons/expand.png', height: 15, width: 15, color: Colors.black),
                         title: Text("Is Learn2Recycle free?", style: TextStyle(fontFamily: 'Comfortaa')),
                         children: [
                           Padding(
@@ -199,7 +200,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ExpansionTile(
                         iconColor: Colors.black,
                         collapsedIconColor: Colors.black,
-                        trailing: Image.asset('assets/icons/expand.png', height: 20, width: 20, color: Colors.black),
+                        trailing: Image.asset('assets/icons/expand.png', height: 15, width: 15, color: Colors.black),
                         title: Text("Do I need internet to use the app?", style: TextStyle(fontFamily: 'Comfortaa')),
                         children: [
                           Padding(
@@ -357,6 +358,29 @@ class _ProfilePageState extends State<ProfilePage> {
                         icon: Image.asset('assets/icons/support.png', height: 24, width: 24, color: Colors.white),
                         label: Text(
                           "Help & Support",
+                          style: TextStyle(fontFamily: 'Comfortaa', fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFFa4c291),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    SizedBox(
+                      width: 250,
+                      height: 60,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => RecycleInfoPage()),
+                          );
+                        },
+                        icon: Image.asset('assets/icons/guidance.png', height: 24, width: 24, color: Colors.white),
+                        label: Text(
+                          "Recycling Guidelines",
                           style: TextStyle(fontFamily: 'Comfortaa', fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(

@@ -52,10 +52,20 @@ class _MainScreenState extends State<MainScreen> {
         backgroundColor: Colors.white,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        selectedItemColor: Colors.green[900],
+        selectedItemColor: const Color(0xFF245651),
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
+        selectedLabelStyle: const TextStyle(
+          fontFamily: 'Comfortaa',
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: 'Comfortaa',
+          fontSize: 10,
+          fontWeight: FontWeight.normal,
+        ),
         items: [
           BottomNavigationBarItem(
             icon: _buildIcon('assets/icons/placeholder.png', 0),
