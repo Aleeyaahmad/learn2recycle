@@ -6,6 +6,7 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:learn2recycle/classify_page.dart';
 import 'package:learn2recycle/detection_result.dart';
+import 'package:learn2recycle/recycle_info.dart'; // <-- Added
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Homepage extends StatefulWidget {
@@ -133,7 +134,6 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
       await _classifyImage(file);
       Navigator.of(context).pop();
 
-      // Navigate to DetectionResultPage first
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -180,7 +180,6 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
       await _classifyImage(file);
       Navigator.of(context).pop();
 
-      // Navigate to DetectionResultPage first
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -205,23 +204,29 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildButton(String label, String iconPath, Function() onPressed) {
-    return ElevatedButton.icon(
+    return ElevatedButton(
       onPressed: onPressed,
-      icon: Image.asset(iconPath, width: 24, height: 24, color: Colors.white),
-      label: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 16,
-          color: Colors.white,
-          fontFamily: 'Comfortaa',
-          fontWeight: FontWeight.bold,
-        ),
-      ),
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF245651),
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         fixedSize: const Size(250, 60),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Image.asset(iconPath, width: 24, height: 24, color: Colors.white),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+              fontFamily: 'Comfortaa',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -262,7 +267,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                 const SizedBox(height: 15),
                 _buildButton("Upload Photo", "assets/icons/gallery.png", _uploadPhoto),
                 const SizedBox(height: 15),
-                _buildButton("Uploaded Images", "assets/icons/list.png", () {
+                _buildButton("History", "assets/icons/list.png", () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -271,6 +276,13 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                         output: _output,
                       ),
                     ),
+                  );
+                }),
+                const SizedBox(height: 15),
+                _buildButton("Recycle Guidelines", "assets/icons/guidance.png", () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const RecycleInfoPage()),
                   );
                 }),
                 const SizedBox(height: 30),
@@ -290,7 +302,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
-                        height: 150,
+                        height: 100, // made ads smaller
                         child: ListView(
                           scrollDirection: Axis.horizontal,
                           children: [
@@ -298,8 +310,8 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                               borderRadius: BorderRadius.circular(12),
                               child: Image.asset(
                                 'assets/icons/ads1.png',
-                                width: 250,
-                                height: 150,
+                                width: 200,
+                                height: 100,
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -308,8 +320,8 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                               borderRadius: BorderRadius.circular(12),
                               child: Image.asset(
                                 'assets/icons/ads2.png',
-                                width: 250,
-                                height: 150,
+                                width: 200,
+                                height: 100,
                                 fit: BoxFit.cover,
                               ),
                             ),

@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class UploadedImagesPage extends StatelessWidget {
+class UploadedImagesPage extends StatefulWidget {
   final List<File> imageFiles;
   final List<Map<String, dynamic>> output;
 
@@ -14,78 +14,24 @@ class UploadedImagesPage extends StatelessWidget {
     required this.output,
   }) : super(key: key);
 
-  Future<Size> _getImageSize(File file) async {
-    final completer = Completer<Size>();
-    final image = Image.file(file);
-    image.image.resolve(const ImageConfiguration()).addListener(
-      ImageStreamListener((ImageInfo info, bool _) {
-        completer.complete(Size(
-          info.image.width.toDouble(),
-          info.image.height.toDouble(),
-        ));
-      }),
-    );
-    return completer.future;
+  @override
+  State<UploadedImagesPage> createState() => _UploadedImagesPageState();
+}
+
+class _UploadedImagesPageState extends State<UploadedImagesPage> {
+  late List<bool> _expandedList;
+
+  @override
+  void initState() {
+    super.initState();
+    _expandedList = List.generate(widget.imageFiles.length, (_) => false);
   }
 
-  Future<void> _deleteImage(BuildContext context, int index) async {
-    File removedImage = imageFiles.removeAt(index);
-    output.removeWhere((e) => e['path'] == removedImage.path);
-
+  Future<void> _saveData() async {
     final prefs = await SharedPreferences.getInstance();
-    final paths = imageFiles.map((f) => f.path).toList();
+    final paths = widget.imageFiles.map((f) => f.path).toList();
     await prefs.setStringList('stored_images', paths);
-    await prefs.setString('detection_output', jsonEncode(output));
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          backgroundColor: Colors.white,
-          title: const Text(
-            'Image Deleted',
-            style: TextStyle(
-              fontFamily: 'Comfortaa',
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          content: const Text(
-            'The image has been deleted successfully.',
-            style: TextStyle(
-              fontFamily: 'Comfortaa',
-              fontSize: 15,
-              color: Colors.black54,
-            ),
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFa4c291),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text(
-                'OK',
-                style: TextStyle(
-                  fontFamily: 'Comfortaa',
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+    await prefs.setString('detection_output', jsonEncode(widget.output));
   }
 
   String _DisposalTip(String label) {
@@ -120,6 +66,90 @@ class UploadedImagesPage extends StatelessWidget {
     }
   }
 
+  Future<void> _confirmAndDeleteImage(BuildContext context, int index) async {
+    File imageToDelete = widget.imageFiles[index];
+    List<Map<String, dynamic>> detectionsToDelete =
+        widget.output.where((e) => e['path'] == imageToDelete.path).toList();
+
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Delete Image?',
+            style: TextStyle(fontFamily: 'Comfortaa', fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black),
+          ),
+          content: const Text(
+            'Are you sure you want to delete this image? You can undo this action.',
+            style: TextStyle(fontFamily: 'Comfortaa', fontSize: 14, color: Colors.black),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel', style: TextStyle(fontFamily: 'Comfortaa', color: Colors.black)),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              child: const Text('Delete', style: TextStyle(fontFamily: 'Comfortaa', color: Colors.white)),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      widget.imageFiles.removeAt(index);
+      widget.output.removeWhere((e) => e['path'] == imageToDelete.path);
+      bool wasExpanded = _expandedList.removeAt(index);
+
+      setState(() {});
+      _saveData();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFFa4c291), // Green background
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Image deleted',
+              style: TextStyle(color: Colors.white, fontFamily: 'Comfortaa', fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            TextButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar(); // 👈 Dismiss immediately
+                setState(() {
+                  widget.imageFiles.insert(index, imageToDelete);
+                  widget.output.insertAll(index, detectionsToDelete);
+                  _expandedList.insert(index, wasExpanded);
+                });
+                _saveData();
+              },
+              child: const Text(
+                'Undo',
+                style: TextStyle(color: Colors.white, fontFamily: 'Comfortaa', fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        duration: const Duration(seconds: 2),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+    );
+    } else {
+      // User cancelled the deletion, do nothing
+      setState(() {
+        _expandedList[index] = !_expandedList[index];
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,24 +163,29 @@ class UploadedImagesPage extends StatelessWidget {
         ),
         title: const Text(
           "Waste Classification",
-          style: TextStyle(fontSize: 20,fontFamily: 'Comfortaa', fontWeight: FontWeight.bold, color: Colors.white,
+          style: TextStyle(
+            fontSize: 20,
+            fontFamily: 'Comfortaa',
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
         backgroundColor: const Color(0xFFa4c291),
         centerTitle: true,
       ),
       body: ListView.builder(
-        itemCount: imageFiles.length,
+        itemCount: widget.imageFiles.length,
         itemBuilder: (context, index) {
-          final reversedIndex = imageFiles.length - 1 - index;
-          final image = imageFiles[reversedIndex];
-          final detections = output.where((e) => e['path'] == image.path).toList();
+          final reversedIndex = widget.imageFiles.length - 1 - index;
+          final image = widget.imageFiles[reversedIndex];
+          final detections = widget.output.where((e) => e['path'] == image.path).toList();
 
           return Dismissible(
             key: Key(image.path),
             direction: DismissDirection.endToStart,
-            onDismissed: (direction) async {
-              await _deleteImage(context, reversedIndex);
+            confirmDismiss: (_) async {
+              await _confirmAndDeleteImage(context, reversedIndex);
+              return false; // Prevent automatic deletion; handled manually.
             },
             background: Container(
               color: Colors.red,
@@ -162,61 +197,58 @@ class UploadedImagesPage extends StatelessWidget {
                 ),
               ),
             ),
-            child: Card(
-              margin: const EdgeInsets.all(12),
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              color: Colors.white,
-              child: FutureBuilder<Size>(
-                future: _getImageSize(image),
-                builder: (context, snapshot) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (snapshot.hasData)
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final maxWidth = constraints.maxWidth;
-                            final aspectRatio = snapshot.data!.width / snapshot.data!.height;
-
-                            return ClipRRect(
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                              child: SizedBox(
-                                width: maxWidth,
-                                child: AspectRatio(
-                                  aspectRatio: aspectRatio,
-                                  child: Image.file(
-                                    image,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _expandedList[reversedIndex] = !_expandedList[reversedIndex];
+                });
+              },
+              child: Card(
+                margin: const EdgeInsets.all(12),
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      child: Image.file(
+                        image,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      child: Text(
+                        'Tap to ${_expandedList[reversedIndex] ? 'hide' : 'view'} details',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontFamily: 'Comfortaa',
+                          color: Colors.grey[700],
                         ),
-                      if (snapshot.hasData)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          child: Text(
-                            'Image Size: ${snapshot.data!.width.toInt()} x ${snapshot.data!.height.toInt()} px',
-                            style: TextStyle(fontSize: 14, fontFamily: 'Comfortaa', color: Colors.grey[700],
-                            ),
-                          ),
-                        ),
+                      ),
+                    ),
+                    if (_expandedList[reversedIndex])
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: detections.isEmpty
-                            ? Text(
+                            ? const Text(
                                 'No recyclable items detected',
-                                style: const TextStyle(fontSize: 16,fontFamily: 'Comfortaa', color: Colors.black,
-                                ),
+                                style: TextStyle(fontSize: 16, fontFamily: 'Comfortaa', color: Colors.black),
                               )
                             : Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'Detected Items:',
-                                    style: TextStyle(fontSize: 16, fontFamily: 'Comfortaa', fontWeight: FontWeight.bold, color: Color(0xFF245651),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontFamily: 'Comfortaa',
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF245651),
                                     ),
                                   ),
                                   const SizedBox(height: 6),
@@ -268,7 +300,10 @@ class UploadedImagesPage extends StatelessWidget {
                                               Expanded(
                                                 child: Text(
                                                   tipText,
-                                                  style: const TextStyle(fontSize: 14, fontFamily: 'Comfortaa', color: Color(0xFF245651), fontStyle: FontStyle.normal,
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontFamily: 'Comfortaa',
+                                                    color: Color(0xFF245651),
                                                   ),
                                                 ),
                                               ),
@@ -281,9 +316,8 @@ class UploadedImagesPage extends StatelessWidget {
                                 ],
                               ),
                       ),
-                    ],
-                  );
-                },
+                  ],
+                ),
               ),
             ),
           );

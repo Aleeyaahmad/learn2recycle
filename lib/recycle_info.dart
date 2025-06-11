@@ -3,10 +3,28 @@ import 'package:flutter/material.dart';
 class RecycleInfoPage extends StatelessWidget {
   const RecycleInfoPage({Key? key}) : super(key: key);
 
+  Map<String, dynamic> getEmojiAndColor(String label) {
+    switch (label.toLowerCase()) {
+      case 'paper':
+      case 'cardboard':
+        return {'iconPath': 'assets/icons/blue.png'};
+      case 'glass':
+        return {'iconPath': 'assets/icons/brown.png'};
+      case 'metal':
+      case 'plastic':
+        return {'iconPath': 'assets/icons/orange.png'};
+      default:
+        return {'iconPath': 'assets/icons/green.png'};
+    }
+  }
+
   Widget _buildCategory(String emoji, String title, String doText, String dontText) {
+    final info = getEmojiAndColor(title);
+    final iconPath = info['iconPath'];
+
     return Card(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24), // More rounded
+        borderRadius: BorderRadius.circular(24),
       ),
       margin: const EdgeInsets.symmetric(vertical: 10),
       elevation: 4,
@@ -18,10 +36,10 @@ class RecycleInfoPage extends StatelessWidget {
           collapsedBackgroundColor: const Color(0xFFa4c291),
           backgroundColor: Colors.lightGreen[50],
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24), // More rounded
+            borderRadius: BorderRadius.circular(24),
           ),
           collapsedShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24), // More rounded
+            borderRadius: BorderRadius.circular(24),
           ),
           leading: Text(
             emoji,
@@ -29,12 +47,40 @@ class RecycleInfoPage extends StatelessWidget {
           ),
           iconColor: Colors.black,
           collapsedIconColor: Colors.black,
-          trailing: Image.asset('assets/icons/expand.png', height: 15, width: 15, color: Colors.black,
+          trailing: Image.asset(
+            'assets/icons/expand.png',
+            height: 15,
+            width: 15,
+            color: Colors.black,
           ),
-          title: Text(
-            title,
-            style: const TextStyle(fontFamily: 'Comfortaa', fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black,
-            ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'Comfortaa',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Text(
+                    'Goes in this bin colour: ',
+                    style: TextStyle(
+                      fontFamily: 'Comfortaa',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  Image.asset(iconPath, height: 32, width: 32),
+                ],
+              ),
+            ],
           ),
           children: [
             Padding(
@@ -48,7 +94,10 @@ class RecycleInfoPage extends StatelessWidget {
                       const SizedBox(width: 6),
                       const Text(
                         'Do:',
-                        style: TextStyle(fontFamily: 'Comfortaa', fontSize: 18, fontWeight: FontWeight.bold,
+                        style: TextStyle(
+                          fontFamily: 'Comfortaa',
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
@@ -65,7 +114,10 @@ class RecycleInfoPage extends StatelessWidget {
                       const SizedBox(width: 6),
                       const Text(
                         'Don’t:',
-                        style: TextStyle(fontFamily: 'Comfortaa', fontSize: 18, fontWeight: FontWeight.bold,
+                        style: TextStyle(
+                          fontFamily: 'Comfortaa',
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
@@ -96,8 +148,12 @@ class RecycleInfoPage extends StatelessWidget {
           },
         ),
         title: const Text(
-          "Recycling Guidelines",
-          style: TextStyle(fontSize: 20, fontFamily: 'Comfortaa', fontWeight: FontWeight.bold, color: Colors.white,
+          "Recycle Guidelines",
+          style: TextStyle(
+            fontSize: 20,
+            fontFamily: 'Comfortaa',
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
         centerTitle: true,
@@ -129,8 +185,8 @@ class RecycleInfoPage extends StatelessWidget {
             _buildCategory(
               '🥫',
               'Metal',
-             '• Recycle clean cans like soda or food cans\n• Metal containers are okay if they’re not dirty',
-             '• Don’t recycle spray cans or metal with paint or layers',
+              '• Recycle clean cans like soda or food cans\n• Metal containers are okay if they’re not dirty',
+              '• Don’t recycle spray cans or metal with paint or layers',
             ),
             _buildCategory(
               '🍶',

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'start_screen.dart';
-import 'recycle_info.dart'; 
+import 'recycle_info.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -40,11 +40,8 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  //Clears image paths and detection results before full logout
   Future<void> _clearStoredDataOnLogout() async {
     final prefs = await SharedPreferences.getInstance();
-
-    // Delete image files from device storage
     final imagePaths = prefs.getStringList('stored_images') ?? [];
     for (var path in imagePaths) {
       final file = File(path);
@@ -52,15 +49,12 @@ class _ProfilePageState extends State<ProfilePage> {
         await file.delete();
       }
     }
-
-    // Clear specific keys related to object detection
     await prefs.remove('stored_images');
     await prefs.remove('detection_output');
   }
 
   void _logout() async {
-    await _clearStoredDataOnLogout(); //Clear stored image/detection data
-
+    await _clearStoredDataOnLogout();
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
 
@@ -122,11 +116,11 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           ListTile(
             leading: Image.asset('assets/icons/about-us.png', height: 28, width: 28, color: Colors.black),
-            title: Text("About Me", style: TextStyle(fontFamily: 'Comfortaa', fontWeight: FontWeight.bold)),
+            title: Text("About Developer", style: TextStyle(fontFamily: 'Comfortaa', fontWeight: FontWeight.bold)),
             onTap: () {
               Navigator.pop(context);
               _showCustomDialog(
-                title: "About Me",
+                title: "About Developer",
                 content: Text(
                   "A committed-one to making recycling easy and accessible for everyone.",
                   style: TextStyle(fontFamily: 'Comfortaa'),
@@ -368,28 +362,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     SizedBox(height: 12),
-                    SizedBox(
-                      width: 250,
-                      height: 60,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => RecycleInfoPage()),
-                          );
-                        },
-                        icon: Image.asset('assets/icons/guidance.png', height: 24, width: 24, color: Colors.white),
-                        label: Text(
-                          "Recycling Guidelines",
-                          style: TextStyle(fontFamily: 'Comfortaa', fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFa4c291),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                    ),
                   ],
                 )
               else
