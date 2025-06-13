@@ -6,7 +6,7 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:learn2recycle/classify_page.dart';
 import 'package:learn2recycle/detection_result.dart';
-import 'package:learn2recycle/recycle_info.dart'; // <-- Added
+import 'package:learn2recycle/recycle_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Homepage extends StatefulWidget {
@@ -79,6 +79,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
     await prefs.setString('detection_output', jsonEncode(_output));
   }
 
+  // ✅ Updated to include box + image dimensions
   Future<void> _classifyImage(File image) async {
     final bytes = await image.readAsBytes();
     final decoded = img.decodeImage(bytes);
@@ -96,11 +97,14 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
     if (output == null) return;
 
     final results = output.map((pred) {
-      var box = pred['box'];
+      var box = pred['box']; // [x1, y1, x2, y2, confidence]
       return {
         'path': image.path,
         'label': pred['tag'],
         'confidence': (box[4] * 100).toStringAsFixed(2),
+        'box': box.sublist(0, 4),
+        'imageWidth': decoded.width,
+        'imageHeight': decoded.height,
       };
     }).toList();
 
@@ -219,12 +223,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
           const SizedBox(width: 12),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-              fontFamily: 'Comfortaa',
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 16, color: Colors.white, fontFamily: 'Comfortaa', fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -245,20 +244,12 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                 Text(
                   "Snap & \nRecycle! 📸♻️",
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontFamily: 'Pacifico',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: const TextStyle(fontSize: 32, fontFamily: 'Pacifico', fontWeight: FontWeight.bold, color: Colors.white,),
                 ),
                 const SizedBox(height: 10),
-                Text(
+                const Text(
                   "Take a picture & learn about recycling!",
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontFamily: 'Comfortaa',
-                    color: Colors.white,
+                  style: TextStyle(fontSize: 15, fontFamily: 'Comfortaa', color: Colors.white,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -286,56 +277,190 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                   );
                 }),
                 const SizedBox(height: 30),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Go Green Today!",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontFamily: 'comfortaa',
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 100, // made ads smaller
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                'assets/icons/ads1.png',
-                                width: 200,
-                                height: 100,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                'assets/icons/ads2.png',
-                                width: 200,
-                                height: 100,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      "Go Green Today!",
+                      style: TextStyle(fontSize: 18, fontFamily: 'comfortaa', fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 100,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                      GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => Dialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              backgroundColor: Colors.white,
+                              child: Stack(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(24.0),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.asset(
+                                            'assets/icons/ads1.png',
+                                            height: 150,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          "Recycle Game",
+                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Comfortaa'),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const Text(
+                                          "Fun challenges that test the recycling skills. Learn how to sort materials and make smart choices to help protect the Earth! 🌍♻️",
+                                          style: TextStyle(fontSize: 12, fontFamily: 'Comfortaa'),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                              // You can later redirect to your game feature or more info page
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text("Thanks for downloading 😊", style: TextStyle(fontFamily: 'Comfortaa', color: Colors.white)),
+                                                ),
+                                              );
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Color(0xFFa4c291),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                            child: const Text("Go to Play Store", style: TextStyle(fontFamily: 'Comfortaa', color: Colors.white)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: GestureDetector(
+                                      onTap: () => Navigator.of(context).pop(),
+                                      child: Image.asset('assets/icons/dont.png', height: 20, width: 20),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                        child: Image.asset(
+                          'assets/icons/ads1.png',
+                          width: MediaQuery.of(context).size.width,
+                          height: 100,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => Dialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              backgroundColor: Colors.white,
+                              child: Stack(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(24.0),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.asset(
+                                            'assets/icons/ads2.png',
+                                            height: 150,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          "All About Recycling | Recycling for Kids",
+                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Comfortaa'),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const Text(
+                                          "With bright visuals and hands-on activities, explore recycling and learn why it’s important for protecting our planet! 🌍♻️",
+                                          style: TextStyle(fontSize: 12, fontFamily: 'Comfortaa'),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                              // You can later redirect to your game feature or more info page
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text("Thanks for visiting 😊", style: TextStyle(fontFamily: 'Comfortaa', color: Colors.white)),
+                                                ),
+                                              );
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:Color(0xFFa4c291),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                            ),
+                                            child: const Text("Visit Website", style: TextStyle(fontFamily: 'Comfortaa', color: Colors.white)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: GestureDetector(
+                                      onTap: () => Navigator.of(context).pop(),
+                                      child: Image.asset('assets/icons/dont.png', height: 20, width: 20),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                        child: Image.asset(
+                          'assets/icons/ads2.png',
+                          width: MediaQuery.of(context).size.width,
+                          height: 100,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+              }

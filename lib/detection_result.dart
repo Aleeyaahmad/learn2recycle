@@ -109,9 +109,54 @@ class DetectionResultPage extends StatelessWidget {
                             width: maxWidth,
                             child: AspectRatio(
                               aspectRatio: aspectRatio,
-                              child: Image.file(
-                                image,
-                                fit: BoxFit.contain,
+                              child: Stack(
+                                children: [
+                                  Image.file(
+                                    image,
+                                    fit: BoxFit.contain,
+                                    width: maxWidth,
+                                  ),
+                                  ...detections.map((det) {
+                                    final box = det['box'];
+                                    final imageWidth = det['imageWidth'];
+                                    final imageHeight = det['imageHeight'];
+                                    if (box == null || imageWidth == null || imageHeight == null) {
+                                      return const SizedBox();
+                                    }
+
+                                    final scaleX = maxWidth / imageWidth;
+                                    final scaleY = maxWidth / imageWidth * (imageHeight / imageWidth);
+
+                                    final left = box[0] * scaleX;
+                                    final top = box[1] * scaleY;
+                                    final width = (box[2] - box[0]) * scaleX;
+                                    final height = (box[3] - box[1]) * scaleY;
+
+                                    return Positioned(
+                                      left: left,
+                                      top: top,
+                                      width: width,
+                                      height: height,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          border: Border.all(color: Colors.redAccent, width: 2),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Align(
+                                          alignment: Alignment.topLeft,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                            color: Colors.redAccent.withOpacity(0.7),
+                                            child: Text(
+                                              '${det['label']}',
+                                              style: const TextStyle(color: Colors.white, fontSize: 10),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ],
                               ),
                             ),
                           ),

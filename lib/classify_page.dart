@@ -62,8 +62,22 @@ class _UploadedImagesPageState extends State<UploadedImagesPage> {
       case 'plastic':
         return {'iconPath': 'assets/icons/orange.png', 'color': Colors.orange};
       default:
-        return {'iconPath': 'assets/icons/green.png', 'color': Colors.grey};
+        return {'iconPath': 'assets/icons/green.png', 'color': Colors.green};
     }
+  }
+
+  Future<Size> _getImageSize(File file) async {
+    final completer = Completer<Size>();
+    final image = Image.file(file);
+    image.image.resolve(const ImageConfiguration()).addListener(
+      ImageStreamListener((ImageInfo info, bool _) {
+        completer.complete(Size(
+          info.image.width.toDouble(),
+          info.image.height.toDouble(),
+        ));
+      }),
+    );
+    return completer.future;
   }
 
   Future<void> _confirmAndDeleteImage(BuildContext context, int index) async {
@@ -109,41 +123,40 @@ class _UploadedImagesPageState extends State<UploadedImagesPage> {
       _saveData();
 
       ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color(0xFFa4c291), // Green background
-        content: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Image deleted',
-              style: TextStyle(color: Colors.white, fontFamily: 'Comfortaa', fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-            TextButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar(); // 👈 Dismiss immediately
-                setState(() {
-                  widget.imageFiles.insert(index, imageToDelete);
-                  widget.output.insertAll(index, detectionsToDelete);
-                  _expandedList.insert(index, wasExpanded);
-                });
-                _saveData();
-              },
-              child: const Text(
-                'Undo',
+        SnackBar(
+          backgroundColor: const Color(0xFFa4c291),
+          content: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Image deleted',
                 style: TextStyle(color: Colors.white, fontFamily: 'Comfortaa', fontSize: 15, fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
+              TextButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  setState(() {
+                    widget.imageFiles.insert(index, imageToDelete);
+                    widget.output.insertAll(index, detectionsToDelete);
+                    _expandedList.insert(index, wasExpanded);
+                  });
+                  _saveData();
+                },
+                child: const Text(
+                  'Undo',
+                  style: TextStyle(color: Colors.white, fontFamily: 'Comfortaa', fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          duration: const Duration(seconds: 2),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        duration: const Duration(seconds: 2),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      ),
-    );
+      );
     } else {
-      // User cancelled the deletion, do nothing
       setState(() {
         _expandedList[index] = !_expandedList[index];
       });
@@ -175,16 +188,17 @@ class _UploadedImagesPageState extends State<UploadedImagesPage> {
       ),
       body: ListView.builder(
         itemCount: widget.imageFiles.length,
-        itemBuilder: (context, index) {
-          final reversedIndex = widget.imageFiles.length - 1 - index;
-          final image = widget.imageFiles[reversedIndex];
+        itemBuilder: (context, i) {
+          // Show newest image at the top by iterating in reverse
+          final index = widget.imageFiles.length - 1 - i;
+          final image = widget.imageFiles[index];
           final detections = widget.output.where((e) => e['path'] == image.path).toList();
 
           return Dismissible(
             key: Key(image.path),
             direction: DismissDirection.endToStart,
             confirmDismiss: (_) async {
-              await _confirmAndDeleteImage(context, reversedIndex);
+              await _confirmAndDeleteImage(context, index);
               return false; // Prevent automatic deletion; handled manually.
             },
             background: Container(
@@ -200,7 +214,7 @@ class _UploadedImagesPageState extends State<UploadedImagesPage> {
             child: GestureDetector(
               onTap: () {
                 setState(() {
-                  _expandedList[reversedIndex] = !_expandedList[reversedIndex];
+                  _expandedList[index] = !_expandedList[index];
                 });
               },
               child: Card(
@@ -211,111 +225,228 @@ class _UploadedImagesPageState extends State<UploadedImagesPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                      child: Image.file(
-                        image,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      child: Text(
-                        'Tap to ${_expandedList[reversedIndex] ? 'hide' : 'view'} details',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontFamily: 'Comfortaa',
-                          color: Colors.grey[700],
+                    // Thumbnail and info row (when not expanded)
+                    if (!_expandedList[index])
+                      ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            image,
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        title: Text(
+                          detections.isNotEmpty
+                              ? detections.map((d) => '${d['label']} - ${d['confidence']}%').join(' , ')
+                              : 'No recyclable items detected',
+                          style: const TextStyle(
+                            fontFamily: 'Comfortaa',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Tap to view details',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontFamily: 'Comfortaa',
+                            color: Colors.grey[700],
+                          ),
                         ),
                       ),
-                    ),
-                    if (_expandedList[reversedIndex])
+                    // Expanded view (full image and details)
+                    if (_expandedList[index]) ...[
                       Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: detections.isEmpty
-                            ? const Text(
-                                'No recyclable items detected',
-                                style: TextStyle(fontSize: 16, fontFamily: 'Comfortaa', color: Colors.black),
-                              )
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Detected Items:',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontFamily: 'Comfortaa',
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF245651),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  ...detections.map((det) {
-                                    final emojiColor = getEmojiAndColor(det['label']);
-                                    final iconPath = emojiColor['iconPath'] as String;
-                                    final color = emojiColor['color'] as Color;
-                                    final tipText = _DisposalTip(det['label']);
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        child: Text(
+                          'Tap to hide details',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontFamily: 'Comfortaa',
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                      FutureBuilder<Size>(
+                        future: _getImageSize(image),
+                        builder: (context, snapshot) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (snapshot.hasData)
+                                LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final maxWidth = constraints.maxWidth;
+                                    final aspectRatio = snapshot.data!.width / snapshot.data!.height;
 
-                                    return Container(
-                                      margin: const EdgeInsets.symmetric(vertical: 4),
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF5FFF5),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: const Color(0xFFa4c291),
-                                          width: 1,
+                                    return ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                      child: SizedBox(
+                                        width: maxWidth,
+                                        child: AspectRatio(
+                                          aspectRatio: aspectRatio,
+                                          child: Stack(
+                                            children: [
+                                              Image.file(
+                                                image,
+                                                fit: BoxFit.contain,
+                                                width: maxWidth,
+                                              ),
+                                              ...detections.map((det) {
+                                                final box = det['box'];
+                                                final imageWidth = det['imageWidth'];
+                                                final imageHeight = det['imageHeight'];
+                                                if (box == null || imageWidth == null || imageHeight == null) {
+                                                  return const SizedBox();
+                                                }
+
+                                                final scaleX = maxWidth / imageWidth;
+                                                final scaleY = maxWidth / imageWidth * (imageHeight / imageWidth);
+
+                                                final left = box[0] * scaleX;
+                                                final top = box[1] * scaleY;
+                                                final width = (box[2] - box[0]) * scaleX;
+                                                final height = (box[3] - box[1]) * scaleY;
+
+                                                return Positioned(
+                                                  left: left,
+                                                  top: top,
+                                                  width: width,
+                                                  height: height,
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(color: Colors.redAccent, width: 2),
+                                                      borderRadius: BorderRadius.circular(4),
+                                                    ),
+                                                    child: Align(
+                                                      alignment: Alignment.topLeft,
+                                                      child: Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                                        color: Colors.redAccent.withOpacity(0.7),
+                                                        child: Text(
+                                                          '${det['label']}',
+                                                          style: const TextStyle(color: Colors.white, fontSize: 10),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              }).toList(),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                      child: Column(
+                                    );
+                                  },
+                                ),
+                              if (snapshot.hasData)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  child: Text(
+                                    'Image Size: ${snapshot.data!.width.toInt()} x ${snapshot.data!.height.toInt()} px',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontFamily: 'Comfortaa',
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                ),
+                              Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: detections.isEmpty
+                                    ? const Text(
+                                        'No recyclable items detected',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontFamily: 'Comfortaa',
+                                          color: Colors.black,
+                                        ),
+                                      )
+                                    : Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            '${det['label']} - ${det['confidence']}%',
-                                            style: const TextStyle(
-                                              fontSize: 15,
+                                            'Detected Items:',
+                                            style: TextStyle(
+                                              fontSize: 16,
                                               fontFamily: 'Comfortaa',
-                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green[900],
                                             ),
                                           ),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.all(12),
-                                                decoration: BoxDecoration(
-                                                  color: color.withOpacity(0.3),
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                child: Image.asset(
-                                                  iconPath,
-                                                  height: 40,
-                                                  width: 40,
+                                          const SizedBox(height: 6),
+                                          ...detections.map((det) {
+                                            final emojiColor = getEmojiAndColor(det['label']);
+                                            final iconPath = emojiColor['iconPath'] as String;
+                                            final color = emojiColor['color'] as Color;
+                                            final tipText = _DisposalTip(det['label']);
+
+                                            return Container(
+                                              margin: const EdgeInsets.symmetric(vertical: 4),
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF5FFF5),
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(
+                                                  color: const Color(0xFFa4c291),
+                                                  width: 1,
                                                 ),
                                               ),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Text(
-                                                  tipText,
-                                                  style: const TextStyle(
-                                                    fontSize: 14,
-                                                    fontFamily: 'Comfortaa',
-                                                    color: Color(0xFF245651),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    '${det['label']} - ${det['confidence']}%',
+                                                    style: const TextStyle(
+                                                      fontSize: 15,
+                                                      fontFamily: 'Comfortaa',
+                                                      color: Colors.black,
+                                                    ),
                                                   ),
-                                                ),
+                                                  const SizedBox(height: 4),
+                                                  Row(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Container(
+                                                        padding: const EdgeInsets.all(12),
+                                                        decoration: BoxDecoration(
+                                                          color: color.withOpacity(0.3),
+                                                          borderRadius: BorderRadius.circular(8),
+                                                        ),
+                                                        child: Image.asset(
+                                                          iconPath,
+                                                          height: 40,
+                                                          width: 40,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 12),
+                                                      Expanded(
+                                                        child: Text(
+                                                          tipText,
+                                                          style: const TextStyle(
+                                                            fontSize: 14,
+                                                            fontFamily: 'Comfortaa',
+                                                            color: Color(0xFF245651),
+                                                            fontStyle: FontStyle.normal,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
                                               ),
-                                            ],
-                                          ),
+                                            );
+                                          }).toList(),
                                         ],
                                       ),
-                                    );
-                                  }).toList(),
-                                ],
                               ),
+                            ],
+                          );
+                        },
                       ),
+                    ],
                   ],
                 ),
               ),
