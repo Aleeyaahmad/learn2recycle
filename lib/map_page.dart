@@ -158,6 +158,7 @@ class _MapPageState extends State<MapPage> {
                     controller: _locationSearchController,
                     decoration: InputDecoration(
                       hintText: 'Search city or place',
+                      hintStyle: TextStyle(color: Colors.black, fontSize: 14, fontFamily: 'Comfortaa'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),

@@ -41,11 +41,11 @@ class _UploadedImagesPageState extends State<UploadedImagesPage> {
       case 'cardboard':
         return 'Flatten boxes and remove plastic wrap or tape.';
       case 'glass':
-        return 'Rinse containers and remove lids.';
+        return 'Rinse containers and remove lids if different material.';
       case 'metal':
         return 'Rinse cans and compress if possible.\nScrap metal should be collected separately.';
       case 'plastic':
-        return 'Check recycling number, rinse and remove caps.';
+        return 'Rinse plastics and remove caps if different material.';
       default:
         return 'Dispose of this item responsibly.';
     }
@@ -156,11 +156,8 @@ class _UploadedImagesPageState extends State<UploadedImagesPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       );
-    } else {
-      setState(() {
-        _expandedList[index] = !_expandedList[index];
-      });
     }
+    // No else branch, so card state does not change on cancel
   }
 
   @override
@@ -186,273 +183,287 @@ class _UploadedImagesPageState extends State<UploadedImagesPage> {
         backgroundColor: const Color(0xFFa4c291),
         centerTitle: true,
       ),
-      body: ListView.builder(
-        itemCount: widget.imageFiles.length,
-        itemBuilder: (context, i) {
-          // Show newest image at the top by iterating in reverse
-          final index = widget.imageFiles.length - 1 - i;
-          final image = widget.imageFiles[index];
-          final detections = widget.output.where((e) => e['path'] == image.path).toList();
-
-          return Dismissible(
-            key: Key(image.path),
-            direction: DismissDirection.endToStart,
-            confirmDismiss: (_) async {
-              await _confirmAndDeleteImage(context, index);
-              return false; // Prevent automatic deletion; handled manually.
-            },
-            background: Container(
-              color: Colors.red,
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Image.asset('assets/icons/bin.png', height: 24, width: 24, color: Colors.white),
-                ),
+      body: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 16.0, bottom: 4.0),
+            child: Text(
+              "Tap an item to expand and see details.",
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: 'Comfortaa',
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
             ),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _expandedList[index] = !_expandedList[index];
-                });
-              },
-              child: Card(
-                margin: const EdgeInsets.all(12),
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                color: Colors.white,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Thumbnail and info row (when not expanded)
-                    if (!_expandedList[index])
-                      ListTile(
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.file(
-                            image,
-                            width: 56,
-                            height: 56,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        title: Text(
-                          detections.isNotEmpty
-                              ? detections.map((d) => '${d['label']} - ${d['confidence']}%').join(' , ')
-                              : 'No recyclable items detected',
-                          style: const TextStyle(
-                            fontFamily: 'Comfortaa',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        subtitle: Text(
-                          'Tap to view details',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontFamily: 'Comfortaa',
-                            color: Colors.grey[700],
-                          ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: widget.imageFiles.length,
+              itemBuilder: (context, i) {
+                final index = widget.imageFiles.length - 1 - i;
+                final image = widget.imageFiles[index];
+                final detections = widget.output.where((e) => e['path'] == image.path).toList();
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: Dismissible(
+                    key: Key(image.path),
+                    direction: DismissDirection.endToStart,
+                    confirmDismiss: (_) async {
+                      await _confirmAndDeleteImage(context, index);
+                      return false;
+                    },
+                    background: Container(
+                      color: Colors.red,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Image.asset('assets/icons/bin.png', height: 24, width: 24, color: Colors.white),
                         ),
                       ),
-                    // Expanded view (full image and details)
-                    if (_expandedList[index]) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        child: Text(
-                          'Tap to hide details',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontFamily: 'Comfortaa',
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ),
-                      FutureBuilder<Size>(
-                        future: _getImageSize(image),
-                        builder: (context, snapshot) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (snapshot.hasData)
-                                LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    final maxWidth = constraints.maxWidth;
-                                    final aspectRatio = snapshot.data!.width / snapshot.data!.height;
-
-                                    return ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                                      child: SizedBox(
-                                        width: maxWidth,
-                                        child: AspectRatio(
-                                          aspectRatio: aspectRatio,
-                                          child: Stack(
-                                            children: [
-                                              Image.file(
-                                                image,
-                                                fit: BoxFit.contain,
-                                                width: maxWidth,
-                                              ),
-                                              ...detections.map((det) {
-                                                final box = det['box'];
-                                                final imageWidth = det['imageWidth'];
-                                                final imageHeight = det['imageHeight'];
-                                                if (box == null || imageWidth == null || imageHeight == null) {
-                                                  return const SizedBox();
-                                                }
-
-                                                final scaleX = maxWidth / imageWidth;
-                                                final scaleY = maxWidth / imageWidth * (imageHeight / imageWidth);
-
-                                                final left = box[0] * scaleX;
-                                                final top = box[1] * scaleY;
-                                                final width = (box[2] - box[0]) * scaleX;
-                                                final height = (box[3] - box[1]) * scaleY;
-
-                                                return Positioned(
-                                                  left: left,
-                                                  top: top,
-                                                  width: width,
-                                                  height: height,
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(color: Colors.redAccent, width: 2),
-                                                      borderRadius: BorderRadius.circular(4),
-                                                    ),
-                                                    child: Align(
-                                                      alignment: Alignment.topLeft,
-                                                      child: Container(
-                                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                                        color: Colors.redAccent.withOpacity(0.7),
-                                                        child: Text(
-                                                          '${det['label']}',
-                                                          style: const TextStyle(color: Colors.white, fontSize: 10),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              }).toList(),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
+                    ),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _expandedList[index] = !_expandedList[index];
+                        });
+                      },
+                      child: Card(
+                        margin: EdgeInsets.zero,
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        color: Colors.white,
+                        child: AnimatedCrossFade(
+                          duration: const Duration(milliseconds: 250),
+                          crossFadeState: _expandedList[index]
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          firstChild: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    image,
+                                    width: 56,
+                                    height: 56,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                              if (snapshot.hasData)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                const SizedBox(width: 16),
+                                Expanded(
                                   child: Text(
-                                    'Image Size: ${snapshot.data!.width.toInt()} x ${snapshot.data!.height.toInt()} px',
-                                    style: TextStyle(
-                                      fontSize: 14,
+                                    detections.isNotEmpty
+                                        ? detections.map((d) => '${d['label']} - ${d['confidence']}%').join(', ')
+                                        : 'No recyclable items detected',
+                                    style: const TextStyle(
                                       fontFamily: 'Comfortaa',
-                                      color: Colors.grey[700],
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
                                     ),
                                   ),
                                 ),
-                              Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: detections.isEmpty
-                                    ? const Text(
-                                        'No recyclable items detected',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontFamily: 'Comfortaa',
-                                          color: Colors.black,
-                                        ),
-                                      )
-                                    : Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Detected Items:',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontFamily: 'Comfortaa',
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.green[900],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          ...detections.map((det) {
-                                            final emojiColor = getEmojiAndColor(det['label']);
-                                            final iconPath = emojiColor['iconPath'] as String;
-                                            final color = emojiColor['color'] as Color;
-                                            final tipText = _DisposalTip(det['label']);
+                              ],
+                            ),
+                          ),
+                          secondChild: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FutureBuilder<Size>(
+                                  future: _getImageSize(image),
+                                  builder: (context, snapshot) {
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        if (snapshot.hasData)
+                                          LayoutBuilder(
+                                            builder: (context, constraints) {
+                                              final maxWidth = constraints.maxWidth;
+                                              final aspectRatio = snapshot.data!.width / snapshot.data!.height;
 
-                                            return Container(
-                                              margin: const EdgeInsets.symmetric(vertical: 4),
-                                              padding: const EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFF5FFF5),
-                                                borderRadius: BorderRadius.circular(8),
-                                                border: Border.all(
-                                                  color: const Color(0xFFa4c291),
-                                                  width: 1,
-                                                ),
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    '${det['label']} - ${det['confidence']}%',
-                                                    style: const TextStyle(
-                                                      fontSize: 15,
-                                                      fontFamily: 'Comfortaa',
-                                                      color: Colors.black,
+                                              return ClipRRect(
+                                                borderRadius: BorderRadius.circular(12),
+                                                child: SizedBox(
+                                                  width: maxWidth,
+                                                  child: AspectRatio(
+                                                    aspectRatio: aspectRatio,
+                                                    child: Stack(
+                                                      children: [
+                                                        Image.file(
+                                                          image,
+                                                          fit: BoxFit.contain,
+                                                          width: maxWidth,
+                                                        ),
+                                                        ...detections.map((det) {
+                                                          final box = det['box'];
+                                                          final imageWidth = det['imageWidth'];
+                                                          final imageHeight = det['imageHeight'];
+                                                          if (box == null || imageWidth == null || imageHeight == null) {
+                                                            return const SizedBox();
+                                                          }
+
+                                                          final scaleX = maxWidth / imageWidth;
+                                                          final scaleY = maxWidth / imageWidth * (imageHeight / imageWidth);
+
+                                                          final left = box[0] * scaleX;
+                                                          final top = box[1] * scaleY;
+                                                          final width = (box[2] - box[0]) * scaleX;
+                                                          final height = (box[3] - box[1]) * scaleY;
+
+                                                          return Positioned(
+                                                            left: left,
+                                                            top: top,
+                                                            width: width,
+                                                            height: height,
+                                                            child: Container(
+                                                              decoration: BoxDecoration(
+                                                                border: Border.all(color: Colors.redAccent, width: 2),
+                                                                borderRadius: BorderRadius.circular(4),
+                                                              ),
+                                                              child: Align(
+                                                                alignment: Alignment.topLeft,
+                                                                child: Container(
+                                                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                                                  color: Colors.redAccent.withOpacity(0.7),
+                                                                  child: Text(
+                                                                    '${det['label']}',
+                                                                    style: const TextStyle(color: Colors.white, fontSize: 10),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        }).toList(),
+                                                      ],
                                                     ),
                                                   ),
-                                                  const SizedBox(height: 4),
-                                                  Row(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Container(
-                                                        padding: const EdgeInsets.all(12),
-                                                        decoration: BoxDecoration(
-                                                          color: color.withOpacity(0.3),
-                                                          borderRadius: BorderRadius.circular(8),
-                                                        ),
-                                                        child: Image.asset(
-                                                          iconPath,
-                                                          height: 40,
-                                                          width: 40,
-                                                        ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        if (snapshot.hasData)
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8),
+                                            child: Text(
+                                              'Image Size: ${snapshot.data!.width.toInt()} x ${snapshot.data!.height.toInt()} px',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontFamily: 'Comfortaa',
+                                                color: Colors.grey[700],
+                                              ),
+                                            ),
+                                          ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 8.0),
+                                          child: detections.isEmpty
+                                              ? const Text(
+                                                  'No recyclable items detected',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontFamily: 'Comfortaa',
+                                                    color: Colors.black,
+                                                  ),
+                                                )
+                                              : Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      'Detected Items:',
+                                                      style: TextStyle(
+                                                        fontSize: 16,
+                                                        fontFamily: 'Comfortaa',
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.green[900],
                                                       ),
-                                                      const SizedBox(width: 12),
-                                                      Expanded(
-                                                        child: Text(
-                                                          tipText,
-                                                          style: const TextStyle(
-                                                            fontSize: 14,
-                                                            fontFamily: 'Comfortaa',
-                                                            color: Color(0xFF245651),
-                                                            fontStyle: FontStyle.normal,
+                                                    ),
+                                                    const SizedBox(height: 6),
+                                                    ...detections.map((det) {
+                                                      final emojiColor = getEmojiAndColor(det['label']);
+                                                      final iconPath = emojiColor['iconPath'] as String;
+                                                      final color = emojiColor['color'] as Color;
+                                                      final tipText = _DisposalTip(det['label']);
+
+                                                      return Container(
+                                                        margin: const EdgeInsets.symmetric(vertical: 4),
+                                                        padding: const EdgeInsets.all(8),
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(0xFFF5FFF5),
+                                                          borderRadius: BorderRadius.circular(8),
+                                                          border: Border.all(
+                                                            color: const Color(0xFFa4c291),
+                                                            width: 1,
                                                           ),
                                                         ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ],
-                                      ),
-                              ),
-                            ],
-                          );
-                        },
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Text(
+                                                              '${det['label']} - ${det['confidence']}%',
+                                                              style: const TextStyle(
+                                                                fontSize: 15,
+                                                                fontFamily: 'Comfortaa',
+                                                                color: Colors.black,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(height: 4),
+                                                            Row(
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                Container(
+                                                                  padding: const EdgeInsets.all(12),
+                                                                  decoration: BoxDecoration(
+                                                                    color: color.withOpacity(0.3),
+                                                                    borderRadius: BorderRadius.circular(8),
+                                                                  ),
+                                                                  child: Image.asset(
+                                                                    iconPath,
+                                                                    height: 40,
+                                                                    width: 40,
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(width: 12),
+                                                                Expanded(
+                                                                  child: Text(
+                                                                    tipText,
+                                                                    style: const TextStyle(
+                                                                      fontSize: 14,
+                                                                      fontFamily: 'Comfortaa',
+                                                                      color: Color(0xFF245651),
+                                                                      fontStyle: FontStyle.normal,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                  ],
+                                                ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    ],
-                  ],
-                ),
-              ),
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

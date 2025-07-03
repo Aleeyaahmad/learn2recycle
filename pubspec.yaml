@@ -36,8 +36,9 @@ flutter:
     - assets/fonts/
     - assets/icons/
     - assets/labels.txt
+    - assets/yolov8_70_best_epoch60_float32.tflite
+    - assets/yolov8_80_best_epoch60_float32.tflite
     - assets/best_saved_model.tflite
-
   fonts:
     - family: OleoScript
       fonts:

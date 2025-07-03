@@ -30,6 +30,7 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin {
   List<File> imageFiles = [];
   List<Map<String, dynamic>> _output = [];
+  
   final FlutterVision vision = FlutterVision();
 
   late AnimationController _controller;
@@ -51,7 +52,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
 
   Future<void> _loadModel() async {
     await vision.loadYoloModel(
-      modelPath: 'assets/best_saved_model.tflite',
+      modelPath: 'assets/yolov8_70_best_epoch60_float32.tflite',
       labels: 'assets/labels.txt',
       modelVersion: 'yolov8',
       quantization: false,
@@ -79,7 +80,6 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
     await prefs.setString('detection_output', jsonEncode(_output));
   }
 
-  // ✅ Updated to include box + image dimensions
   Future<void> _classifyImage(File image) async {
     final bytes = await image.readAsBytes();
     final decoded = img.decodeImage(bytes);
@@ -97,7 +97,7 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
     if (output == null) return;
 
     final results = output.map((pred) {
-      var box = pred['box']; // [x1, y1, x2, y2, confidence]
+      var box = pred['box'];
       return {
         'path': image.path,
         'label': pred['tag'],
@@ -277,190 +277,88 @@ class _HomepageState extends State<Homepage> with SingleTickerProviderStateMixin
                   );
                 }),
                 const SizedBox(height: 30),
-                Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      "Go Green Today!",
-                      style: TextStyle(fontSize: 18, fontFamily: 'comfortaa', fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 100,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                      GestureDetector(
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => Dialog(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              backgroundColor: Colors.white,
-                              child: Stack(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(24.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.asset(
-                                            'assets/icons/ads1.png',
-                                            height: 150,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        const Text(
-                                          "Recycle Game",
-                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Comfortaa'),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        const Text(
-                                          "Fun challenges that test the recycling skills. Learn how to sort materials and make smart choices to help protect the Earth! 🌍♻️",
-                                          style: TextStyle(fontSize: 12, fontFamily: 'Comfortaa'),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        SizedBox(
-                                          width: double.infinity,
-                                          child: ElevatedButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                              // You can later redirect to your game feature or more info page
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text("Thanks for downloading 😊", style: TextStyle(fontFamily: 'Comfortaa', color: Colors.white)),
-                                                ),
-                                              );
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Color(0xFFa4c291),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                            child: const Text("Go to Play Store", style: TextStyle(fontFamily: 'Comfortaa', color: Colors.white)),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 8,
-                                    right: 8,
-                                    child: GestureDetector(
-                                      onTap: () => Navigator.of(context).pop(),
-                                      child: Image.asset('assets/icons/dont.png', height: 20, width: 20),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                        child: Image.asset(
-                          'assets/icons/ads1.png',
-                          width: MediaQuery.of(context).size.width,
-                          height: 100,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => Dialog(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              backgroundColor: Colors.white,
-                              child: Stack(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(24.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Image.asset(
-                                            'assets/icons/ads2.png',
-                                            height: 150,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        const Text(
-                                          "All About Recycling | Recycling for Kids",
-                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'Comfortaa'),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        const Text(
-                                          "With bright visuals and hands-on activities, explore recycling and learn why it’s important for protecting our planet! 🌍♻️",
-                                          style: TextStyle(fontSize: 12, fontFamily: 'Comfortaa'),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        SizedBox(
-                                          width: double.infinity,
-                                          child: ElevatedButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                              // You can later redirect to your game feature or more info page
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text("Thanks for visiting 😊", style: TextStyle(fontFamily: 'Comfortaa', color: Colors.white)),
-                                                ),
-                                              );
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:Color(0xFFa4c291),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                            child: const Text("Visit Website", style: TextStyle(fontFamily: 'Comfortaa', color: Colors.white)),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 8,
-                                    right: 8,
-                                    child: GestureDetector(
-                                      onTap: () => Navigator.of(context).pop(),
-                                      child: Image.asset('assets/icons/dont.png', height: 20, width: 20),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                        child: Image.asset(
-                          'assets/icons/ads2.png',
-                          width: MediaQuery.of(context).size.width,
-                          height: 100,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }
-              }
+                const Spacer(), // Pushes the banner to the bottom
+                const ContinuousImageBanner(),
+                const SizedBox(height: 30), // Extra space below the banner
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ContinuousImageBanner extends StatefulWidget {
+  const ContinuousImageBanner({Key? key}) : super(key: key);
+
+  @override
+  State<ContinuousImageBanner> createState() => _ContinuousImageBannerState();
+}
+
+class _ContinuousImageBannerState extends State<ContinuousImageBanner> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final ScrollController _scrollController;
+  final List<String> bannerImages = [
+    'assets/icons/ads1.png',
+    'assets/icons/ads2.png',
+    'assets/icons/ads3.png',
+    'assets/icons/ads4.png',
+    'assets/icons/ads6.png',
+    
+    // Add more image paths as needed
+  ];
+  static const double imageWidth = 300; // Longer ads
+  static const double spacing = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 15),
+    )..addListener(_scrollImages)
+     ..repeat();
+  }
+
+  void _scrollImages() {
+    final totalWidth = (imageWidth + spacing) * bannerImages.length;
+    if (_scrollController.hasClients) {
+      double offset = (_controller.value * totalWidth);
+      _scrollController.jumpTo(offset % totalWidth);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Repeat the images to make the loop seamless
+    final repeatedImages = List.generate(3, (_) => bannerImages).expand((i) => i).toList();
+    return SizedBox(
+      height: 100, // Taller banner
+      child: ListView.builder(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: repeatedImages.length,
+        itemBuilder: (context, index) {
+          return Container(
+            width: imageWidth,
+            margin: const EdgeInsets.symmetric(horizontal: spacing / 2),
+            child: Image.asset(
+              repeatedImages[index],
+              fit: BoxFit.fill,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

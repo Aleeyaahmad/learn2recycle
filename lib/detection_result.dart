@@ -35,11 +35,11 @@ class DetectionResultPage extends StatelessWidget {
       case 'cardboard':
         return 'Flatten boxes and remove plastic wrap or tape.';
       case 'glass':
-        return 'Rinse containers and remove lids.';
+        return 'Rinse containers and remove lids if different material.';
       case 'metal':
         return 'Rinse cans and compress if possible.\nScrap metal should be collected separately.';
       case 'plastic':
-        return 'Check recycling number, rinse and remove caps.';
+        return 'Rinse plastics and remove caps if different material.';
       default:
         return 'Dispose of this item responsibly.';
     }
@@ -67,12 +67,7 @@ class DetectionResultPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           "Detection Result",
-          style: TextStyle(
-            fontSize: 20,
-            fontFamily: 'Comfortaa',
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontSize: 20, fontFamily: 'Comfortaa', fontWeight: FontWeight.bold, color: Colors.white),
         ),
         backgroundColor: const Color(0xFFa4c291),
         centerTitle: true,
@@ -168,10 +163,7 @@ class DetectionResultPage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       child: Text(
                         'Image Size: ${snapshot.data!.width.toInt()} x ${snapshot.data!.height.toInt()} px',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontFamily: 'Comfortaa',
-                          color: Colors.grey[700],
+                        style: TextStyle(fontSize: 14, fontFamily: 'Comfortaa', color: Colors.grey[700],
                         ),
                       ),
                     ),
@@ -180,23 +172,14 @@ class DetectionResultPage extends StatelessWidget {
                     child: detections.isEmpty
                         ? const Text(
                             'No recyclable items detected',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Comfortaa',
-                              color: Colors.black,
-                            ),
+                            style: TextStyle(fontSize: 16, fontFamily: 'Comfortaa', color: Colors.black),
                           )
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Detected Items:',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontFamily: 'Comfortaa',
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green[900],
-                                ),
+                                style: TextStyle(fontSize: 16, fontFamily: 'Comfortaa', fontWeight: FontWeight.bold, color: Colors.green[900]),
                               ),
                               const SizedBox(height: 6),
                               ...detections.map((det) {
@@ -221,11 +204,7 @@ class DetectionResultPage extends StatelessWidget {
                                     children: [
                                       Text(
                                         '${det['label']} - ${det['confidence']}%',
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontFamily: 'Comfortaa',
-                                          color: Colors.black,
-                                        ),
+                                        style: const TextStyle(fontSize: 15, fontFamily: 'Comfortaa', color: Colors.black),
                                       ),
                                       const SizedBox(height: 4),
                                       Row(
@@ -247,12 +226,7 @@ class DetectionResultPage extends StatelessWidget {
                                           Expanded(
                                             child: Text(
                                               tipText,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontFamily: 'Comfortaa',
-                                                color: Color(0xFF245651),
-                                                fontStyle: FontStyle.normal,
-                                              ),
+                                              style: const TextStyle(fontSize: 14, fontFamily: 'Comfortaa', color: Color(0xFF245651), fontStyle: FontStyle.normal),
                                             ),
                                           ),
                                         ],

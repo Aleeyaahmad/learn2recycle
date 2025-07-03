@@ -69,7 +69,7 @@ class RecycleInfoPage extends StatelessWidget {
               Row(
                 children: [
                   const Text(
-                    'Goes in this bin colour: ',
+                    'Bin colour: ',
                     style: TextStyle(
                       fontFamily: 'Comfortaa',
                       fontSize: 14,
@@ -179,7 +179,7 @@ class RecycleInfoPage extends StatelessWidget {
             _buildCategory(
               '🧴',
               'Plastic',
-              '• Recycle clean bottles, bottle caps, and some plastic containers\n• Look for symbols like PET, HDPE, or PP',
+              '• Recycle clean bottles, bottle caps, and some plastic containers',
               '• Don’t recycle plastic bags, plastic wrap, or dirty containers',
             ),
             _buildCategory(
