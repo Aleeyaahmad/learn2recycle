@@ -304,9 +304,14 @@ class _ContinuousImageBannerState extends State<ContinuousImageBanner> with Sing
     'assets/icons/ads2.png',
     'assets/icons/ads3.png',
     'assets/icons/ads4.png',
-    'assets/icons/ads6.png',
-    
-    // Add more image paths as needed
+    'assets/icons/ads5.png',
+  ];
+  final List<String> bannerInfos = [
+    'Crush Waste, Not Earth | Coca-Cola',
+    'All About Recycling | Youtube Kids',
+    'Recycle and be Rewarded | Lancôme',
+    'Recycle Rush | Apps on Google Play.',
+    'Upcycling Ideas | Better Homes & Gardens',
   ];
   static const double imageWidth = 300; // Longer ads
   static const double spacing = 0;
@@ -337,6 +342,63 @@ class _ContinuousImageBannerState extends State<ContinuousImageBanner> with Sing
     super.dispose();
   }
 
+  void _showAdInfoDialog(int imageIndex) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text(
+        'Ad Information',
+        style: TextStyle(fontFamily: 'Comfortaa', fontWeight: FontWeight.bold, fontSize: 18),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(bannerImages[imageIndex % bannerImages.length], height: 80),
+          const SizedBox(height: 12),
+          Text(
+            bannerInfos[imageIndex % bannerInfos.length],
+            style: const TextStyle(fontFamily: 'Comfortaa', fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: () {
+              Navigator.pop(context); // Close the info dialog
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Thanks for visiting!',
+                    style: TextStyle(fontFamily: 'Comfortaa', fontSize: 12),
+                  ),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            child: const Text(
+              'Visit',
+              style: TextStyle(
+                fontFamily: 'Comfortaa',
+                decoration: TextDecoration.underline,
+                color: Color(0xFF245651),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text(
+            'Close',
+            style: TextStyle(fontFamily: 'Comfortaa', fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFFa4c291)),
+          ),
+        ),
+      ],
+    ),
+  );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Repeat the images to make the loop seamless
@@ -349,12 +411,16 @@ class _ContinuousImageBannerState extends State<ContinuousImageBanner> with Sing
         physics: const NeverScrollableScrollPhysics(),
         itemCount: repeatedImages.length,
         itemBuilder: (context, index) {
-          return Container(
-            width: imageWidth,
-            margin: const EdgeInsets.symmetric(horizontal: spacing / 2),
-            child: Image.asset(
-              repeatedImages[index],
-              fit: BoxFit.fill,
+          final imagePath = repeatedImages[index];
+          return GestureDetector(
+            onTap: () => _showAdInfoDialog(index % bannerImages.length),
+            child: Container(
+              width: imageWidth,
+              margin: const EdgeInsets.symmetric(horizontal: spacing / 2),
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.fill,
+              ),
             ),
           );
         },
